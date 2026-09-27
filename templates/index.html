@@ -19,7 +19,7 @@
         <a href="{{ url_for('game', game_id=g.id) if g.status == 'active' else url_for('summary', game_id=g.id) }}">Game {{ g.id }}</a>
         <span>{{ g.names }}</span>
         <span class="status status-{{ g.status }}">{{ 'In progress' if g.status == 'active' else 'Finished' }}</span>
-        <span class="muted">{{ g.created_at }} UTC</span>
+        <time class="muted" datetime="{{ g.created_at }}Z">{{ g.created_at | localtime }}</time>
         <details class="delete">
           <summary><span class="if-closed">Delete</span><span class="if-open">Cancel</span></summary>
           <form method="post" action="{{ url_for('delete_game', game_id=g.id) }}">

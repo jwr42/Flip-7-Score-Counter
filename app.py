@@ -1,5 +1,7 @@
 """Flip 7 score keeper: Flask routes. Run with `flask --app app run --debug`."""
 import os
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 
 from flask import Flask, abort, flash, redirect, render_template, request, url_for
 
@@ -18,6 +20,8 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY=os.environ.get("FLIP7_SECRET_KEY", "flip7-dev"),
         DATABASE=os.path.join(app.instance_path, "flip7.sqlite"),
+        # IANA zone for displayed times; None means the time zone of this machine.
+        TIMEZONE=os.environ.get("FLIP7_TIMEZONE"),
     )
     if test_config:
         app.config.update(test_config)
@@ -28,6 +32,13 @@ def create_app(test_config=None):
                                  NUMBERS=NUMBERS, MODIFIERS=MODIFIERS, ACTIONS=ACTIONS,
                                  DECK_COMPOSITION=DECK_COMPOSITION,
                                  TARGETED_ACTIONS=(FREEZE, FLIP_THREE))
+
+    @app.template_filter("localtime")
+    def localtime(utc_text):
+        """Show a stored UTC timestamp (SQLite datetime('now')) in local time."""
+        when = datetime.strptime(utc_text, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+        tz = ZoneInfo(app.config["TIMEZONE"]) if app.config["TIMEZONE"] else None
+        return when.astimezone(tz).strftime("%-d %b %Y, %H:%M %Z")
 
     @app.context_processor
     def inject_theme():

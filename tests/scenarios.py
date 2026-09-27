@@ -1,7 +1,7 @@
 """Catalogue of Flip 7 rules and edge cases, each tied to its source.
 
 Sources, in order of authority:
-  R  = the rulebook, FLIP_7_RULES.pdf (Ruleset Edition 3.1), by page
+  R  = the rulebook, Flip 7 Ruleset Edition 3.1, by page
   O  = the publisher's official FAQ (theop.games/pages/flip-7-faqs, Dized rules FAQ)
   C  = community "Flip 7 FAQ / Edge Cases" v1.4 (BoardGameGeek), by case number;
        each of these rulings cites a publisher representative on BGG

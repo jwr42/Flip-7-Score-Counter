@@ -4,7 +4,7 @@ This page lists every rule and edge case the score keeper is checked against, wh
 
 ## Sources, in order of authority
 
-1. **Rulebook:** `FLIP_7_RULES.pdf`, Ruleset Edition 3.1 (cited by page).
+1. **Rulebook:** Flip 7 Ruleset Edition 3.1 (cited by page).
 2. **Official FAQ:** the publisher's FAQ at [theop.games](https://theop.games/pages/flip-7-faqs) and on [Dized](https://rules.dized.com/game/dPDRM857TU-BFRF7LzGE0g/faq).
 3. **Community FAQ:** [Flip 7 FAQ / Edge Cases v1.4](https://boardgamegeek.com/filepage/292492/flip-7-faq-edge-cases) on BoardGameGeek ([PDF mirror](https://www.goblins.net/files/images/flip_7_faq_version_1.4.pdf)), cited by case number. Every case used here quotes a publisher representative on the BGG forums.
 

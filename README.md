@@ -1,6 +1,6 @@
 # Flip 7 Score Keeper
 
-A minimalist Flask web app (Python, HTML and CSS only, no JavaScript) for keeping score in the card game **Flip 7**. The scorekeeper logs every card as it is dealt. The app applies the rules from the Flip 7 rulebook (Ruleset Edition 3.1) and explains each one as it happens: busts, Second Chance, Freeze, Flip Three, the Flip 7 bonus, modifiers, round end and the 200-point finish.
+A minimalist Flask web app (Python, HTML and CSS only) for keeping score in the card game **Flip 7**. The scorekeeper logs every card as it is dealt. The app applies the rules from the Flip 7 rulebook (Ruleset Edition 3.1) and explains each one as it happens: busts, Second Chance, Freeze, Flip Three, the Flip 7 bonus, modifiers, round end and the 200-point finish.
 
 ## Run
 

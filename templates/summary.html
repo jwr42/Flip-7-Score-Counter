@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Game {{ game_id }} summary · Flip 7{% endblock %}
+{% block nav %}{% if not state.game_over %}<a href="{{ url_for('game', game_id=game_id) }}">Back to game</a>{% endif %}{% endblock %}
+{% block content %}
+<section class="panel">
+  {% if state.game_over %}
+    <h1>{{ state.names[state.winners[0]] }} wins!</h1>
+  {% else %}
+    <h1>Game {{ game_id }}: in progress</h1>
+  {% endif %}
+  <ol class="standings">
+    {% for pid in standings %}
+      <li><span>{{ state.names[pid] }} <strong>{{ state.totals[pid] }}</strong></span></li>
+    {% endfor %}
+  </ol>
+  {% if state.game_over %}
+  <form method="post" action="{{ url_for('undo', game_id=game_id) }}">
+    <button type="submit">Undo last entry</button>
+  </form>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Running total by round</h2>
+  <div class="chart-wrap">{{ chart | safe }}</div>
+  <ul class="legend">
+    {% for pid in state.order %}
+      <li><span class="swatch series-{{ loop.index0 % 8 + 1 }}"></span>{{ state.names[pid] }}</li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="panel">
+  <h2>Scores by round</h2>
+  <div class="table-scroll">
+  <table class="rounds">
+    <thead>
+      <tr><th>Round</th>{% for pid in state.order %}<th class="num">{{ state.names[pid] }}</th>{% endfor %}</tr>
+    </thead>
+    <tbody>
+      {% for r in state.rounds if r.ended %}
+      <tr>
+        <th scope="row">{{ r.number }}{% if r.end_reason == 'flip7' %} <span class="muted">Flip 7</span>{% endif %}</th>
+        {% for pid in state.order %}
+          {% set hand = r.hands[pid] %}
+          <td class="num" title="{{ hand.breakdown.text }}">
+            {{ r.scores[pid] }}{% if hand.status == 'busted' %} <span class="status status-busted">bust</span>{% elif hand.status == 'flip7' %} <span class="status status-flip7">F7</span>{% endif %}
+            <div class="muted">{{ series[pid][r.number] }}</div>
+          </td>
+        {% endfor %}
+      </tr>
+      {% else %}
+      <tr><td colspan="{{ state.order|length + 1 }}" class="muted">No rounds finished yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="hint">Top number: round score. Below: running total. Hover a score to see its breakdown.</p>
+</section>
+
+<section class="panel">
+  <h2>Draw log</h2>
+  {% for r in state.rounds %}
+    <details {% if loop.last %}open{% endif %}>
+      <summary>Round {{ r.number }}</summary>
+      <ol class="log">
+        {% for entry in state.log if entry.round == r.number %}
+          <li>
+            <span class="log-seq">#{{ entry.seq }}</span> {{ entry.text }}
+            {% if entry.notices %}
+            <ul class="notices">
+              {% for n in entry.notices %}<li class="notice notice-{{ n.level }}">{{ n.text }}</li>{% endfor %}
+            </ul>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    </details>
+  {% endfor %}
+</section>
+{% endblock %}

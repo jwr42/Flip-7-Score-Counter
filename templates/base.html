@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en"{% if theme != "auto" %} data-theme="{{ theme }}"{% endif %}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Flip 7 Score Keeper{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="site">
+    <a class="brand" href="{{ url_for('index') }}">Flip 7 <span>Score Keeper</span></a>
+    <div class="site-nav">
+      {% block nav %}{% endblock %}
+      <form class="theme-switch" method="post" action="{{ url_for('set_theme') }}" aria-label="Color theme">
+        <input type="hidden" name="next" value="{{ request.full_path }}">
+        {% for value, text in [('auto', 'Auto'), ('light', 'Light'), ('dark', 'Dark')] %}
+          <button type="submit" name="theme" value="{{ value }}" aria-pressed="{{ 'true' if theme == value else 'false' }}"{% if value == 'auto' %} title="Follow your device setting"{% endif %}>{{ text }}</button>
+        {% endfor %}
+      </form>
+    </div>
+  </header>
+  <main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <p class="flash flash-{{ category }}" role="alert">{{ message }}</p>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

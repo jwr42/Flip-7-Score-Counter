@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h1>New game</h1>
+  <form method="post" action="{{ url_for('create_game') }}" class="stack">
+    <label for="names">Players, one per line, in seating order (clockwise from the first dealer)</label>
+    <textarea id="names" name="names" rows="6" required placeholder="Alice&#10;Bob&#10;Carol"></textarea>
+    <p class="hint">Flip 7 is for 3 or more players (up to {{ max_players }} with one deck). First to {{ WIN_SCORE }} points at the end of a round wins.</p>
+    <button class="primary" type="submit">Start game</button>
+  </form>
+</section>
+
+{% if games %}
+<section class="panel">
+  <h2>Games</h2>
+  <ul class="games">
+    {% for g in games %}
+      <li>
+        <a href="{{ url_for('game', game_id=g.id) if g.status == 'active' else url_for('summary', game_id=g.id) }}">Game {{ g.id }}</a>
+        <span>{{ g.names }}</span>
+        <span class="status status-{{ g.status }}">{{ 'In progress' if g.status == 'active' else 'Finished' }}</span>
+        <span class="muted">{{ g.created_at }} UTC</span>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,10 @@
+{# Renders the cards in front of one player. Expects `hand`. #}
+<div class="hand">
+  {% for n in hand.numbers %}
+    <span class="chip chip-number{% if loop.last and hand.bust_card is not none %} chip-bust{% endif %}">{{ n }}</span>
+  {% endfor %}
+  {% for m in hand.modifiers %}<span class="chip chip-modifier">{{ label(m) }}</span>{% endfor %}
+  {% for a in hand.actions %}<span class="chip chip-action">{{ label(a) }}</span>{% endfor %}
+  {% if hand.second_chance %}<span class="chip chip-action">Second Chance</span>{% endif %}
+  {% if not hand.has_cards %}<span class="muted">No cards</span>{% endif %}
+</div>

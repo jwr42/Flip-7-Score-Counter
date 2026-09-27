@@ -1,0 +1,10 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "flip7",
+      "url": "http://localhost:5077",
+      "port": 5077
+    }
+  ]
+}

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Round {{ state.round.number }} · Flip 7{% endblock %}
+{% block nav %}<a href="{{ url_for('summary', game_id=game_id) }}">Summary</a>{% endblock %}
+{% block content %}
+{% set r = state.round %}
+{% set active = state.active_players() %}
+<div class="round-bar">
+  <h1>Round {{ r.number }}</h1>
+  <span>Dealer: <strong>{{ state.names[r.dealer_id] }}</strong></span>
+  <span>{{ state.deck.size }} cards left in deck</span>
+  <span>First to {{ WIN_SCORE }}</span>
+</div>
+
+{% if state.pending_gift is not none %}
+<form class="prompt" method="post" action="{{ url_for('give_second_chance', game_id=game_id) }}">
+  <p><strong>{{ state.names[state.pending_gift] }}</strong> already has a Second Chance. Give the extra one to:</p>
+  <select name="target_id" required>
+    {% for pid in state.gift_candidates() %}<option value="{{ pid }}">{{ state.names[pid] }}</option>{% endfor %}
+  </select>
+  <button class="primary" type="submit">Give Second Chance</button>
+</form>
+{% elif state.next_to_assign() %}
+{% set item = state.next_to_assign() %}
+<form class="prompt assign" method="post" action="{{ url_for('resolve_action', game_id=game_id) }}">
+  <p><strong>{{ state.names[item.owner] }}</strong> set aside these cards during Flip Three. Assign each to an active player, in order; none takes effect until all are assigned:</p>
+  <ol>
+    {% for p in state.pending_actions %}
+      <li>{{ label(p.card) }}{% if p.target is not none %} → {{ state.names[p.target] }}{% elif p is sameas item %} ← <strong>assign now</strong>{% endif %}</li>
+    {% endfor %}
+  </ol>
+  <select name="target_id" required>
+    {% for pid in active %}<option value="{{ pid }}">{{ state.names[pid] }}</option>{% endfor %}
+  </select>
+  <button class="primary" type="submit">Assign {{ label(item.card) }}</button>
+</form>
+{% endif %}
+
+{% if state.flip_three %}
+<p class="prompt">Flip Three: <strong>{{ state.names[state.flip_three.target] }}</strong> must take {{ state.flip_three.remaining }} more card{{ '' if state.flip_three.remaining == 1 else 's' }}.
+  {% if state.flip_three.deferred %}Set aside: {% for c in state.flip_three.deferred %}{{ label(c) }}{{ ', ' if not loop.last }}{% endfor %}.{% endif %}</p>
+{% endif %}
+
+{% if r.ended %}
+<section class="panel round-over">
+  <h2>Round {{ r.number }} results</h2>
+  <p>{{ 'Ended by Flip 7.' if r.end_reason == 'flip7' else 'No active players remain.' }}</p>
+  <form method="post" action="{{ url_for('next_round', game_id=game_id) }}">
+    <button class="primary" type="submit">Start round {{ r.number + 1 }}</button>
+  </form>
+</section>
+{% elif state.pending_gift is none and not state.next_to_assign() %}
+<form class="panel draw" method="post" action="{{ url_for('draw', game_id=game_id) }}">
+  {% set suggested = state.suggested_player() %}
+  {% set eligible = [state.flip_three.target] if state.flip_three else active %}
+  <fieldset class="who">
+    <legend>Card dealt to</legend>
+    {% for pid in eligible %}
+      <label class="pick"><input type="radio" name="player_id" value="{{ pid }}" required {% if pid == suggested %}checked{% endif %}><span>{{ state.names[pid] }}</span></label>
+    {% endfor %}
+  </fieldset>
+  {% if not state.flip_three %}
+  <fieldset class="target">
+    <legend>Freeze / Flip Three played on</legend>
+    <select name="target_id">
+      <option value="">Only needed for Freeze or Flip Three</option>
+      {% for pid in active %}<option value="{{ pid }}">{{ state.names[pid] }}</option>{% endfor %}
+    </select>
+  </fieldset>
+  {% endif %}
+  <fieldset class="cards">
+    <legend>Card drawn</legend>
+    {% for group, cards in [('number', NUMBERS), ('modifier', MODIFIERS), ('action', ACTIONS)] %}
+    <div class="card-row">
+      {% for c in cards %}
+        <button type="submit" name="card" value="{{ c }}" class="card card-{{ group }}"
+                {% if not state.deck.can_draw(c) %}disabled{% endif %}
+                title="{{ state.deck.remaining[c] }} of {{ DECK_COMPOSITION[c] }} left in the deck">
+          <span class="face">{{ label(c) }}</span>
+          <span class="left">{{ state.deck.remaining[c] }} left</span>
+        </button>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </fieldset>
+</form>
+{% endif %}
+
+<section class="panel">
+  <h2>Players</h2>
+  <table class="players">
+    <thead><tr><th>Player</th><th>Status</th><th>Cards</th><th>This round</th><th class="num">Total</th><th></th></tr></thead>
+    <tbody>
+    {% for pid in state.order %}
+      {% set hand = r.hands[pid] %}
+      <tr>
+        <th scope="row">{{ state.names[pid] }}{% if pid == r.dealer_id %} <span class="muted">(dealer)</span>{% endif %}</th>
+        <td><span class="status status-{{ hand.status }}">{{ STATUS_LABELS[hand.status] }}</span></td>
+        <td>{% include "_hand.html" %}</td>
+        <td class="breakdown">{{ hand.breakdown.text }}</td>
+        <td class="num"><strong>{{ state.totals[pid] }}</strong></td>
+        <td>
+          {% if hand.is_active and not r.ended %}
+          <form method="post" action="{{ url_for('stay', game_id=game_id) }}">
+            <input type="hidden" name="player_id" value="{{ pid }}">
+            <button type="submit" {% if not hand.has_cards %}disabled title="A player needs at least one card to stay"{% endif %}>Stay</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Rules applied</h2>
+    <form method="post" action="{{ url_for('undo', game_id=game_id) }}">
+      <button type="submit" {% if state.last_seq <= 1 %}disabled{% endif %}>Undo last entry</button>
+    </form>
+  </div>
+  <ul class="notices">
+    {% for entry, notice in recent %}
+      <li class="notice notice-{{ notice.level }}"><span class="muted">R{{ entry.round }}</span> {{ notice.text }}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

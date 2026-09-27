@@ -187,6 +187,15 @@ thead th { font-size: .8rem; color: var(--muted); font-weight: 600; }
 
 .games { list-style: none; margin: 0; padding: 0; }
 .games li { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--line); }
+details.delete { margin-left: auto; }
+details.delete summary { list-style: none; cursor: pointer; font-size: .85rem; color: var(--muted); padding: 2px 8px; border-radius: 6px; }
+details.delete summary::-webkit-details-marker { display: none; }
+details.delete summary:hover { color: var(--bad); }
+details.delete[open] summary { display: block; width: fit-content; margin-left: auto; }
+details.delete .if-open, details.delete[open] .if-closed { display: none; }
+details.delete[open] .if-open { display: inline; }
+details.delete form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 6px; padding: 8px 12px; border-radius: 8px; background: var(--bad-bg); }
+button.danger { background: var(--bad); color: var(--surface); border-color: var(--bad); font-weight: 600; }
 
 .standings { margin: 0 0 12px; padding-left: 1.4em; }
 .standings li { padding: 4px 0; max-width: 18em; }

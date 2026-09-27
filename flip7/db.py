@@ -103,3 +103,10 @@ def delete_last_event(game_id):
                "(SELECT MAX(seq) FROM events WHERE game_id = ?)", (game_id, game_id))
     db.execute("UPDATE games SET status = 'active' WHERE id = ?", (game_id,))
     db.commit()
+
+
+def delete_game(game_id):
+    """Remove a game; its players and entries go with it (ON DELETE CASCADE)."""
+    db = get_db()
+    db.execute("DELETE FROM games WHERE id = ?", (game_id,))
+    db.commit()

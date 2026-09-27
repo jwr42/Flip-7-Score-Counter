@@ -73,3 +73,30 @@ def test_theme_switch_rejects_offsite_redirects_and_bad_values(client):
     resp = client.post("/theme", data={"theme": "neon", "next": "//evil.example"})
     assert resp.headers["Location"] == "/"
     assert b"data-theme" not in client.get("/").data
+
+
+def test_delete_game_removes_it_and_its_entries(client):
+    post(client, "/games", names="Ann\nBen\nCat")
+    post(client, "/games", names="Dee\nEli\nFay")
+    post(client, "/games/1/draw", player_id=ids(client, 1)["Ann"], card="7")
+
+    resp = client.post("/games/1/delete")
+    assert resp.status_code == 302 and resp.headers["Location"] == "/"
+    page = client.get("/").get_data(as_text=True)
+    assert "Deleted Game 1 (Ann, Ben, Cat)." in page
+    assert "Game 1<" not in page and "Game 2<" in page
+
+    from flip7 import db
+    with client.application.app_context():
+        conn = db.get_db()
+        assert conn.execute("SELECT count(*) FROM players WHERE game_id = 1").fetchone()[0] == 0
+        assert conn.execute("SELECT count(*) FROM events WHERE game_id = 1").fetchone()[0] == 0
+        assert conn.execute("SELECT count(*) FROM events WHERE game_id = 2").fetchone()[0] == 1
+    assert client.get("/games/1").status_code == 404
+
+
+def test_delete_requires_post_and_existing_game(client):
+    post(client, "/games", names="Ann\nBen\nCat")
+    assert client.get("/games/1/delete").status_code == 405
+    assert client.post("/games/99/delete").status_code == 404
+    assert "Game 1<" in client.get("/").get_data(as_text=True)

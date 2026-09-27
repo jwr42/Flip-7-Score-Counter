@@ -20,6 +20,13 @@
         <span>{{ g.names }}</span>
         <span class="status status-{{ g.status }}">{{ 'In progress' if g.status == 'active' else 'Finished' }}</span>
         <span class="muted">{{ g.created_at }} UTC</span>
+        <details class="delete">
+          <summary><span class="if-closed">Delete</span><span class="if-open">Cancel</span></summary>
+          <form method="post" action="{{ url_for('delete_game', game_id=g.id) }}">
+            <span>Delete Game {{ g.id }} ({{ g.names }}) permanently?</span>
+            <button type="submit" class="danger">Delete permanently</button>
+          </form>
+        </details>
       </li>
     {% endfor %}
   </ul>

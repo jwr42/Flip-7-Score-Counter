@@ -124,6 +124,15 @@ def create_app(test_config=None):
             flash(f"Undid: {state.log[-1].text}.", "info")
         return redirect(url_for("game", game_id=game_id))
 
+    @app.post("/games/<int:game_id>/delete")
+    def delete_game(game_id):
+        if db.get_game(game_id) is None:
+            abort(404)
+        names = ", ".join(name for _, name in db.get_players(game_id))
+        db.delete_game(game_id)
+        flash(f"Deleted Game {game_id} ({names}).", "info")
+        return redirect(url_for("index"))
+
     @app.get("/games/<int:game_id>/summary")
     def summary(game_id):
         state = load_state(game_id)

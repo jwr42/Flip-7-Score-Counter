@@ -73,10 +73,8 @@
     <div class="card-row">
       {% for c in cards %}
         <button type="submit" name="card" value="{{ c }}" class="card card-{{ group }}"
-                {% if not state.deck.can_draw(c) %}disabled{% endif %}
-                title="{{ state.deck.remaining[c] }} of {{ DECK_COMPOSITION[c] }} left in the deck">
+                {% if not state.deck.can_draw(c) %}disabled{% endif %}>
           <span class="face">{{ label(c) }}</span>
-          <span class="left">{{ state.deck.remaining[c] }} left</span>
         </button>
       {% endfor %}
     </div>

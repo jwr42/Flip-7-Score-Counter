@@ -149,10 +149,9 @@ legend { font-weight: 600; margin-bottom: 6px; padding: 0; }
 .card-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
 .card {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  min-width: 56px; min-height: 64px; padding: 6px 8px; border-radius: 8px;
+  min-width: 56px; min-height: 56px; padding: 6px 8px; border-radius: 8px;
 }
 .card .face { font-size: 1.25rem; font-weight: 700; line-height: 1.1; }
-.card .left { font-size: .7rem; color: var(--muted); }
 .card-number { background: var(--number); }
 .card-modifier { background: var(--modifier); }
 .card-action { background: var(--action); min-width: 96px; }

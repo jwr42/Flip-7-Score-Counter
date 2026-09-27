@@ -106,7 +106,14 @@ def delete_last_event(game_id):
 
 
 def delete_game(game_id):
-    """Remove a game; its players and entries go with it (ON DELETE CASCADE)."""
+    """Remove a game; its players and entries go with it (ON DELETE CASCADE).
+
+    IDs are never reused while other games exist, but once the last game is gone the
+    ID counters are reset so the next game is Game 1 again.
+    """
     db = get_db()
     db.execute("DELETE FROM games WHERE id = ?", (game_id,))
+    if db.execute("SELECT NOT EXISTS (SELECT 1 FROM games)").fetchone()[0]:
+        db.execute("UPDATE sqlite_sequence SET seq = 0 "
+                   "WHERE name IN ('games', 'players', 'events')")
     db.commit()

@@ -100,3 +100,18 @@ def test_delete_requires_post_and_existing_game(client):
     assert client.get("/games/1/delete").status_code == 405
     assert client.post("/games/99/delete").status_code == 404
     assert "Game 1<" in client.get("/").get_data(as_text=True)
+
+
+def test_deleting_the_last_game_restarts_numbering_at_game_1(client):
+    post(client, "/games", names="Ann\nBen\nCat")
+    post(client, "/games", names="Dee\nEli\nFay")
+
+    client.post("/games/1/delete")
+    post(client, "/games", names="Gus\nHal\nIvy")
+    assert "Game 3<" in client.get("/").get_data(as_text=True)   # others remain: no reuse
+
+    client.post("/games/2/delete")
+    client.post("/games/3/delete")
+    resp = post(client, "/games", names="Jo\nKim\nLee")
+    assert "/games/1" in resp.request.path
+    assert ids(client, 1) == {"Jo": 1, "Kim": 2, "Lee": 3}

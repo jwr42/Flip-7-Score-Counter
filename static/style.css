@@ -112,7 +112,7 @@ button, select, textarea {
   font: inherit; color: var(--ink); background: var(--surface);
   border: 1px solid var(--axis); border-radius: 8px; padding: 6px 12px;
 }
-textarea { width: 100%; }
+textarea { width: 100%; resize: vertical; }
 button { cursor: pointer; }
 button:hover:not(:disabled) { border-color: var(--ink-2); }
 button:disabled { opacity: .4; cursor: not-allowed; }

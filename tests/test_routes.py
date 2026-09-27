@@ -147,3 +147,12 @@ def test_start_time_defaults_to_machine_time_zone(client):
     expected = datetime(2026, 7, 1, 17, 49, 31, tzinfo=timezone.utc).astimezone() \
         .strftime("%-d %b %Y, %H:%M %Z")
     assert expected in client.get("/").get_data(as_text=True)
+
+
+def test_favicon_is_linked_and_served(client):
+    assert 'rel="icon" type="image/svg+xml" href="/static/favicon.svg"' in \
+        client.get("/").get_data(as_text=True)
+    for url in ("/favicon.ico", "/static/favicon.svg"):
+        resp = client.get(url)
+        assert resp.status_code == 200 and resp.mimetype == "image/svg+xml"
+        assert b"<svg" in resp.data

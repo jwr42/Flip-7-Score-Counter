@@ -3,7 +3,8 @@ import os
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
-from flask import Flask, abort, flash, redirect, render_template, request, url_for
+from flask import (Flask, abort, flash, redirect, render_template, request,
+                   send_from_directory, url_for)
 
 from flip7 import db
 from flip7.cards import (ACTIONS, DECK_COMPOSITION, FLIP_THREE, FREEZE, MODIFIERS, NUMBERS,
@@ -73,6 +74,11 @@ def create_app(test_config=None):
             if state.game_over:
                 return redirect(url_for("summary", game_id=game_id))
         return redirect(url_for("game", game_id=game_id))
+
+    @app.get("/favicon.ico")
+    def favicon():
+        # Browsers request /favicon.ico directly; serve the SVG icon linked in base.html.
+        return send_from_directory(app.static_folder, "favicon.svg", mimetype="image/svg+xml")
 
     @app.get("/")
     def index():

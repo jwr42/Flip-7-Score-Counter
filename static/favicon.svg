@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect x="3" y="7" width="14" height="20" rx="2" fill="#e5e2f7" stroke="#2b2b2b" stroke-width="1.5" transform="rotate(-14 10 17)"/>
+  <rect x="15" y="7" width="14" height="20" rx="2" fill="#fbe3b4" stroke="#2b2b2b" stroke-width="1.5" transform="rotate(14 22 17)"/>
+  <rect x="9" y="4" width="14" height="21" rx="2" fill="#fffdf6" stroke="#2b2b2b" stroke-width="1.5"/>
+  <text x="16" y="20" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="700" fill="#2a78d6">7</text>
+</svg>

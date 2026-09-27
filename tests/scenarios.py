@@ -222,6 +222,17 @@ SCENARIOS = [
               *flip7_round("Ann"),
               check(game_over=True, winners=["Ann"], totals={"Ann": 234}),
               next_round(error="game is over")]),
+    Scenario("R24-several-players-pass-200", "Rulebook p.12",
+             "When several players pass 200 in the same round, the one with the most points "
+             "wins, and the notice names everyone who passed 200.",
+             [*flip7_round("Ann"), next_round(), *flip7_round("Ben"), next_round(),
+              *flip7_round("Ann"), next_round(), *flip7_round("Ben"), next_round(),
+              *[draw("Ann", n) for n in (12, 11, 10, 9, 6)], stay("Ann"),
+              *[draw("Ben", n) for n in (12, 11, 10, 9, 8, 2)], stay("Ben"),
+              draw("Cat", "+2"), stay("Cat"),
+              check(game_over=True, winners=["Ben"], totals={"Ann": 204, "Ben": 208},
+                    last_notices=["Ann (204) and Ben (208) both passed 200",
+                                  "Ben has the most points and wins"])]),
 
     # ---- Official FAQ ------------------------------------------------------------
     Scenario("O01-x2-excludes-plus-cards-and-bonus", "Official FAQ",
@@ -248,7 +259,9 @@ SCENARIOS = [
               *[draw("Ben", n) for n in (12, 11, 10, 9, 5)], stay("Ben"),
               draw("Cat", "+2"), stay("Cat"),
               check(round_ended=True, totals={"Ann": 203, "Ben": 203}, game_over=False,
-                    last_notices=["tied on 203", "another round"]),
+                    last_notices=["Ann (203) and Ben (203) both passed 200",
+                                  "tied on 203", "Under the rules of Flip 7",
+                                  "another round"]),
               next_round(),
               draw("Ann", "+4"), stay("Ann"), draw("Ben", 3), stay("Ben"),
               draw("Cat", "+6"), stay("Cat"),

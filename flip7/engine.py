@@ -529,19 +529,34 @@ class GameState:
 
         best = max(self.totals.values())
         leaders = [pid for pid in self.order if self.totals[pid] == best]
-        if best >= WIN_SCORE and len(leaders) == 1:
+        passed = [pid for pid in self.order if self.totals[pid] >= WIN_SCORE]
+        if not passed:
+            return
+        passed_text = (_name_list([f"{self._name(pid)} ({self.totals[pid]})" for pid in passed])
+                       + (" both" if len(passed) == 2 else " all") + f" passed {WIN_SCORE}")
+        if len(leaders) == 1:
             self.game_over = True
             self.winners = leaders
-            self._notice("good", f"Game over! A player reached {WIN_SCORE}. "
-                                 f"{self._name(leaders[0])} wins with {best} points.")
-        elif best >= WIN_SCORE:
-            names = " and ".join(self._name(pid) for pid in leaders)
-            self._notice("warn", f"{names} are tied on {best}. Under the official FAQ, everyone "
-                                 f"plays another round until one player has the highest score.")
+            winner = self._name(leaders[0])
+            if len(passed) == 1:
+                self._notice("good", f"Game over! A player reached {WIN_SCORE}. "
+                                     f"{winner} wins with {best} points.")
+            else:
+                self._notice("good", f"Game over! {passed_text}. {winner} has the most points "
+                                     f"and wins.")
+        else:
+            tied = _name_list([self._name(pid) for pid in leaders])
+            self._notice("warn", f"{passed_text}, but {tied} are tied on {best}. Under the rules "
+                                 f"of Flip 7, everyone plays another round until one player has "
+                                 f"the highest score.")
 
 
 def _card_list(cards):
     return ", ".join(label(c) for c in cards)
+
+
+def _name_list(names):
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
 
 
 def _is_are(cards):

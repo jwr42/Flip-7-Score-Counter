@@ -25,7 +25,7 @@ This page lists every rule and edge case the score keeper is checked against, wh
   - the game ends only when a single player leads with at least 200;
   - no legal entry is ever refused.
 
-## Catalogue (47 scenarios)
+## Catalogue (48 scenarios)
 
 | Test ID | Rule | Source | Ruling |
 | --- | --- | --- | --- |
@@ -52,6 +52,7 @@ This page lists every rule and edge case the score keeper is checked against, wh
 | `R21-used-cards-are-not-reshuffled` | Cards from finished rounds go to the discard pile, not back into the deck. | Rulebook p.12 | Rulebook |
 | `R22-dealer-passes-left` | The deck passes left each round and that player becomes the dealer. | Rulebook p.12 | Rulebook |
 | `R23-game-ends-at-200` | At the end of a round in which someone has 200+, the highest total wins. | Rulebook p.12 | Rulebook |
+| `R24-several-players-pass-200` | When several players pass 200 in the same round, the one with the most points wins, and the notice names everyone who passed 200. | Rulebook p.12 | Rulebook |
 | `O01-x2-excludes-plus-cards-and-bonus` | x2 doubles only the number cards, not + cards or the Flip 7 bonus. | Official FAQ | Official FAQ |
 | `O02-last-active-player-flip-three-self` | The last active player must take their own Flip Three. | Official FAQ; Community Case 10 | Official FAQ |
 | `O03-second-chance-does-not-block-freeze` | Second Chance only protects against duplicates; it is discarded at round end. | Official FAQ; Community Case 5 | Official FAQ |

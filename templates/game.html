@@ -58,15 +58,6 @@
       <label class="pick"><input type="radio" name="player_id" value="{{ pid }}" required {% if pid == suggested %}checked{% endif %}><span>{{ state.names[pid] }}</span></label>
     {% endfor %}
   </fieldset>
-  {% if not state.flip_three %}
-  <fieldset class="target">
-    <legend>Freeze / Flip Three played on</legend>
-    <select name="target_id">
-      <option value="">Only needed for Freeze or Flip Three</option>
-      {% for pid in active %}<option value="{{ pid }}">{{ state.names[pid] }}</option>{% endfor %}
-    </select>
-  </fieldset>
-  {% endif %}
   <fieldset class="cards">
     <legend>Card drawn</legend>
     {% for group, cards in [('number', NUMBERS), ('modifier', MODIFIERS), ('action', ACTIONS)] %}
@@ -80,6 +71,15 @@
     </div>
     {% endfor %}
   </fieldset>
+  {% if not state.flip_three %}
+  <fieldset class="target">
+    <legend>Freeze / Flip Three played on</legend>
+    <select name="target_id">
+      <option value="">Only needed for Freeze or Flip Three</option>
+      {% for pid in active %}<option value="{{ pid }}">{{ state.names[pid] }}</option>{% endfor %}
+    </select>
+  </fieldset>
+  {% endif %}
 </form>
 {% endif %}
 

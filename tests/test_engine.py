@@ -1,7 +1,9 @@
 """Rules engine tests, each tied to a rule in the Flip 7 rulebook (Ruleset Edition 3.1)."""
+from collections import Counter
+
 import pytest
 
-from flip7.cards import FLIP_THREE, FREEZE, SECOND_CHANCE, RuleViolation
+from flip7.cards import DECK_COMPOSITION, FLIP_THREE, FREEZE, SECOND_CHANCE, RuleViolation
 from flip7.engine import ACTIVE, BUSTED, FLIP7, FROZEN, STAYED, Event, replay
 
 from conftest import Game, notice_text
@@ -246,6 +248,60 @@ def test_flip7_during_flip_three_ends_round():
     g.draw("Ben", 7)
     assert g.state.round.ended and g.hand("Ben").status == FLIP7
     assert g.score("Ben") == 28 + 15
+
+
+# ---- deck running out mid-Flip Three (p.12; Community Cases 9, 11, 12) --------------
+
+def _deck_down_to(game, *cards):
+    """Leave only `cards` in the deck; everything else is in the discard pile."""
+    game.state.deck.remaining = Counter(cards)
+    game.state.deck.discard = Counter(DECK_COMPOSITION) - Counter(cards)
+
+
+def _assert_all_cards_accounted_for(deck):
+    for card, copies in DECK_COMPOSITION.items():
+        assert deck.remaining[card] + deck.table[card] + deck.discard[card] == copies, card
+
+
+def test_deck_runs_out_during_flip_three(game):
+    _deck_down_to(game, FLIP_THREE, "5")
+    game.draw("Ann", FLIP_THREE, on="Ben")
+    game.draw("Ben", 5)
+    deck = game.state.deck
+    assert deck.size == 0 and game.state.flip_three.remaining == 2
+
+    old_discard = Counter(deck.discard)
+    entry = game.draw("Ben", 7)
+    assert "The deck ran out" in notice_text(entry)
+    assert +deck.remaining == old_discard - Counter({"7": 1})
+    assert deck.table[FLIP_THREE] == 1 and deck.remaining[FLIP_THREE] == 2   # stays in front of Ben
+    assert deck.table["5"] == 1 and deck.remaining["5"] == 4
+    assert game.state.flip_three.remaining == 1
+    _assert_all_cards_accounted_for(deck)
+
+    game.draw("Ben", "+4")
+    assert game.state.flip_three is None
+    assert deck.table[FLIP_THREE] == 0 and deck.discard[FLIP_THREE] == 1   # discarded once resolved
+    assert game.hand("Ben").numbers == [5, 7]
+    _assert_all_cards_accounted_for(deck)
+
+
+def test_set_aside_cards_stay_out_of_a_mid_flip_three_reshuffle(game):
+    _deck_down_to(game, FLIP_THREE, FREEZE)
+    game.draw("Ann", FLIP_THREE, on="Ben")
+    game.draw("Ben", FREEZE)                      # set aside; deck now empty
+    deck = game.state.deck
+    assert deck.size == 0
+
+    game.draw("Ben", 7)                           # reshuffle
+    assert deck.table[FREEZE] == 1 and deck.remaining[FREEZE] == 2
+    _assert_all_cards_accounted_for(deck)
+
+    game.draw("Ben", 8)
+    assert [(p.card, p.target) for p in game.state.pending_actions] == [(FREEZE, None)]
+    game.assign("Cat")
+    assert game.hand("Cat").status == FROZEN
+    _assert_all_cards_accounted_for(deck)
 
 
 # ---- deck validation -------------------------------------------------------

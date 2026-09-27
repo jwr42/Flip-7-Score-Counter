@@ -17,6 +17,7 @@ This page lists every rule and edge case the score keeper is checked against, wh
 - **Engine:** each scenario's entries are replayed through the rules engine, and the test checks statuses, scores, totals, Flip Three progress, set-aside cards, Second Chance hand-offs, deck, table and discard counts, notices, the suggested next player, and the winner.
 - **Web:** the same entries are posted to the real Flask routes. The test checks that refusals are shown, that every notice and total appears on the summary page, that the stored entries match, and that Undo removes one entry.
 - **Undo:** replaying the first *k* entries reproduces the live state after *k* entries, for every *k*.
+- **Deck running out during a Flip Three:** two tests in `tests/test_engine.py` (`test_deck_runs_out_during_flip_three` and `test_set_aside_cards_stay_out_of_a_mid_flip_three_reshuffle`) check that the discard pile becomes the new deck, while the Flip Three being resolved, any set-aside cards and all cards in front of players stay out of it (Rulebook p.12; Community Cases 9, 11 and 12).
 - **Simulation:** 500 random complete games (3–8 players) are dealt from a shuffled 94-card deck. After every entry the test checks that:
   - all 94 cards are accounted for, and every card on the table is visible in front of someone;
   - no active player holds a duplicate number;

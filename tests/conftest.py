@@ -57,11 +57,41 @@ def game():
     return Game("Ann", "Ben", "Cat")
 
 
-@pytest.fixture
-def client(tmp_path):
+PASSWORD = "correct horse"
+
+
+def make_app(tmp_path, **config):
     from app import create_app
-    app = create_app({"TESTING": True, "DATABASE": str(tmp_path / "test.sqlite")})
-    return app.test_client()
+    return create_app({"TESTING": True, "DATABASE": str(tmp_path / "test.sqlite"), **config})
+
+
+def register(client, username, password=PASSWORD):
+    return post(client, "/register", username=username, password=password)
+
+
+def login(client, username, password=PASSWORD):
+    return post(client, "/login", username=username, password=password)
+
+
+@pytest.fixture
+def app(tmp_path):
+    return make_app(tmp_path)
+
+
+@pytest.fixture
+def client(app):
+    """A scorekeeper who is registered and logged in as `tester`."""
+    client = app.test_client()
+    register(client, "tester")
+    return client
+
+
+@pytest.fixture
+def other_client(app):
+    """A second scorekeeper, `rival`, using the same app and database."""
+    client = app.test_client()
+    register(client, "rival")
+    return client
 
 
 def post(client, url, **data):

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Game {{ game.number }}, round {{ state.round.number }} · Flip 7{% endblock %}
+{% block head %}<meta http-equiv="refresh" content="10">{% endblock %}
+{% block nav %}<a href="{{ url_for('watch_summary', token=game.share_token) }}">Summary</a>{% endblock %}
+{% block content %}
+{% set r = state.round %}
+<div class="round-bar">
+  <h1>Round {{ r.number }}</h1>
+  <span>Dealer: <strong>{{ state.names[r.dealer_id] }}</strong></span>
+  <span>{{ state.deck.size }} cards left in deck</span>
+  <span>First to {{ WIN_SCORE }}</span>
+  <span class="muted">Watching · updates every 10 seconds</span>
+</div>
+
+{% include "_players.html" %}
+
+<section class="panel">
+  <h2>Rules applied</h2>
+  <ul class="notices">
+    {% for entry, notice in recent %}
+      <li class="notice notice-{{ notice.level }}"><span class="muted">R{{ entry.round }}</span> {{ notice.text }}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

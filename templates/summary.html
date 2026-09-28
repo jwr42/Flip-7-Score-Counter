@@ -1,19 +1,20 @@
 {% extends "base.html" %}
-{% block title %}Game {{ game_id }} summary · Flip 7{% endblock %}
-{% block nav %}{% if not state.game_over %}<a href="{{ url_for('game', game_id=game_id) }}">Back to game</a>{% endif %}{% endblock %}
+{% block title %}Game {{ game.number }} summary · Flip 7{% endblock %}
+{% block head %}{% if read_only and not state.game_over %}<meta http-equiv="refresh" content="10">{% endif %}{% endblock %}
+{% block nav %}{% if not state.game_over %}<a href="{{ url_for('watch', token=game.share_token) if read_only else url_for('game', game_id=game_id) }}">Back to game</a>{% endif %}{% endblock %}
 {% block content %}
 <section class="panel">
   {% if state.game_over %}
     <h1>{{ state.names[state.winners[0]] }} wins!</h1>
   {% else %}
-    <h1>Game {{ game_id }}: in progress</h1>
+    <h1>Game {{ game.number }}: in progress</h1>
   {% endif %}
   <ol class="standings">
     {% for pid in standings %}
       <li><span>{{ state.names[pid] }} <strong>{{ state.totals[pid] }}</strong></span></li>
     {% endfor %}
   </ol>
-  {% if state.game_over %}
+  {% if state.game_over and not read_only %}
   <form method="post" action="{{ url_for('undo', game_id=game_id) }}">
     <button type="submit">Undo last entry</button>
   </form>

@@ -6,12 +6,21 @@
   <title>{% block title %}Flip 7 Score Keeper{% endblock %}</title>
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% block head %}{% endblock %}
 </head>
 <body>
   <header class="site">
     <a class="brand" href="{{ url_for('index') }}">Flip 7 <span>Score Keeper</span></a>
     <div class="site-nav">
       {% block nav %}{% endblock %}
+      {% if g.user %}
+      <form class="account" method="post" action="{{ url_for('logout') }}">
+        <span class="muted">{{ g.user.username }}</span>
+        <button type="submit" class="link">Log out</button>
+      </form>
+      {% elif request.endpoint not in ('login', 'register') and not read_only %}
+      <a href="{{ url_for('login') }}">Log in</a>
+      {% endif %}
       <form class="theme-switch" method="post" action="{{ url_for('set_theme') }}" aria-label="Color theme">
         <input type="hidden" name="next" value="{{ request.full_path }}">
         {% for value, text in [('auto', 'Auto'), ('light', 'Light'), ('dark', 'Dark')] %}

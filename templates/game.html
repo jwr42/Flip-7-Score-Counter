@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Round {{ state.round.number }} · Flip 7{% endblock %}
+{% block title %}Game {{ game.number }}, round {{ state.round.number }} · Flip 7{% endblock %}
 {% block nav %}<a href="{{ url_for('summary', game_id=game_id) }}">Summary</a>{% endblock %}
 {% block content %}
 {% set r = state.round %}
@@ -83,32 +83,7 @@
 </form>
 {% endif %}
 
-<section class="panel">
-  <h2>Players</h2>
-  <table class="players">
-    <thead><tr><th>Player</th><th>Status</th><th>Cards</th><th>This round</th><th class="num">Total</th><th></th></tr></thead>
-    <tbody>
-    {% for pid in state.order %}
-      {% set hand = r.hands[pid] %}
-      <tr>
-        <th scope="row">{{ state.names[pid] }}{% if pid == r.dealer_id %} <span class="muted">(dealer)</span>{% endif %}</th>
-        <td><span class="status status-{{ hand.status }}">{{ STATUS_LABELS[hand.status] }}</span></td>
-        <td>{% include "_hand.html" %}</td>
-        <td class="breakdown">{{ hand.breakdown.text }}</td>
-        <td class="num"><strong>{{ state.totals[pid] }}</strong></td>
-        <td>
-          {% if hand.is_active and not r.ended %}
-          <form method="post" action="{{ url_for('stay', game_id=game_id) }}">
-            <input type="hidden" name="player_id" value="{{ pid }}">
-            <button type="submit" {% if not hand.has_cards %}disabled title="A player needs at least one card to stay"{% endif %}>Stay</button>
-          </form>
-          {% endif %}
-        </td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</section>
+{% include "_players.html" %}
 
 <section class="panel">
   <div class="panel-head">
@@ -122,5 +97,16 @@
       <li class="notice notice-{{ notice.level }}"><span class="muted">R{{ entry.round }}</span> {{ notice.text }}</li>
     {% endfor %}
   </ul>
+</section>
+
+<section class="panel">
+  <h2>Watch link</h2>
+  <p class="hint">Anyone with this link can follow the game live without logging in. They cannot change anything.</p>
+  <div class="share-row">
+    <input type="text" readonly value="{{ url_for('watch', token=game.share_token, _external=True) }}" aria-label="Watch link">
+    <form method="post" action="{{ url_for('new_share_link', game_id=game_id) }}">
+      <button type="submit" title="Stop the current link working and make a new one">New link</button>
+    </form>
+  </div>
 </section>
 {% endblock %}

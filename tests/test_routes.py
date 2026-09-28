@@ -1,4 +1,4 @@
-from conftest import player_ids as ids, post
+from conftest import make_app, player_ids as ids, post, register
 
 
 def test_full_game_flow(client):
@@ -112,9 +112,9 @@ def test_deleting_the_last_game_restarts_numbering_at_game_1(client):
 
     client.post("/games/2/delete")
     client.post("/games/3/delete")
-    resp = post(client, "/games", names="Jo\nKim\nLee")
-    assert "/games/1" in resp.request.path
-    assert ids(client, 1) == {"Jo": 1, "Kim": 2, "Lee": 3}
+    post(client, "/games", names="Jo\nKim\nLee")
+    page = client.get("/").get_data(as_text=True)
+    assert "Game 1<" in page and "Game 4<" not in page
 
 
 def _set_start_time(client, game_id, utc_text):
@@ -126,9 +126,8 @@ def _set_start_time(client, game_id, utc_text):
 
 
 def test_start_time_shown_in_configured_time_zone(tmp_path):
-    from app import create_app
-    client = create_app({"TESTING": True, "DATABASE": str(tmp_path / "tz.sqlite"),
-                         "TIMEZONE": "Europe/London"}).test_client()
+    client = make_app(tmp_path, TIMEZONE="Europe/London").test_client()
+    register(client, "tester")
     post(client, "/games", names="Ann\nBen\nCat")
 
     _set_start_time(client, 1, "2026-07-01 17:49:31")

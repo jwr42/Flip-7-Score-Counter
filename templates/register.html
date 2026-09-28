@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Create account · Flip 7{% endblock %}
+{% block content %}
+<section class="panel auth">
+  <h1>Create account</h1>
+  <form method="post" action="{{ url_for('register') }}" class="stack">
+    <label for="username">Username</label>
+    <input id="username" name="username" type="text" autocomplete="username" maxlength="{{ max_username }}" required autofocus>
+    <label for="password">Password (at least {{ min_password }} characters)</label>
+    <input id="password" name="password" type="password" autocomplete="new-password" minlength="{{ min_password }}" required>
+    <button class="primary" type="submit">Create account</button>
+  </form>
+  <p class="hint">Already have an account? <a href="{{ url_for('login') }}">Log in</a>.</p>
+</section>
+{% endblock %}

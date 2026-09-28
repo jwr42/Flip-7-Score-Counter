@@ -1,0 +1,27 @@
+<section class="panel">
+  <h2>Players</h2>
+  <table class="players">
+    <thead><tr><th>Player</th><th>Status</th><th>Cards</th><th>This round</th><th class="num">Total</th><th></th></tr></thead>
+    <tbody>
+    {% for pid in state.order %}
+      {% set r = state.round %}
+      {% set hand = r.hands[pid] %}
+      <tr>
+        <th scope="row">{{ state.names[pid] }}{% if pid == r.dealer_id %} <span class="muted">(dealer)</span>{% endif %}</th>
+        <td><span class="status status-{{ hand.status }}">{{ STATUS_LABELS[hand.status] }}</span></td>
+        <td>{% include "_hand.html" %}</td>
+        <td class="breakdown">{{ hand.breakdown.text }}</td>
+        <td class="num"><strong>{{ state.totals[pid] }}</strong></td>
+        <td>
+          {% if hand.is_active and not r.ended and not read_only %}
+          <form method="post" action="{{ url_for('stay', game_id=game_id) }}">
+            <input type="hidden" name="player_id" value="{{ pid }}">
+            <button type="submit" {% if not hand.has_cards %}disabled title="A player needs at least one card to stay"{% endif %}>Stay</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>

@@ -207,7 +207,10 @@ def create_app(test_config=None):
     @app.get("/")
     @login_required
     def index():
-        return render_template("index.html", games=db.list_games(g.user["id"]),
+        games = db.list_games(g.user["id"])
+        # Start the next game with the same table, in the same seating order.
+        last_names = [name for _, name in db.get_players(games[0]["id"])] if games else []
+        return render_template("index.html", games=games, last_names=last_names,
                                max_players=MAX_PLAYERS)
 
     @app.post("/games")

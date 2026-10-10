@@ -45,6 +45,22 @@ def test_game_over_redirects_to_summary(client):
     assert client.get("/games/1").status_code == 302
 
 
+def textarea(client):
+    page = client.get("/").get_data(as_text=True)
+    return page[page.index('<textarea id="names"'):page.index("</textarea>")].split(">", 1)
+
+
+def test_new_game_names_come_from_the_last_game(client, other_client):
+    tag, names = textarea(client)
+    assert names == "" and 'placeholder="Alice&#10;Bob&#10;Carol"' in tag
+    post(client, "/games", names="Ann\nBen\nCat")
+    post(client, "/games", names="Dee\nEli\nFay")
+    assert textarea(client)[1] == "Dee\nEli\nFay"
+    post(client, "/games/2/delete")
+    assert textarea(client)[1] == "Ann\nBen\nCat"
+    assert textarea(other_client)[1] == ""
+
+
 def test_impossible_card_is_blocked(client):
     post(client, "/games", names="Ann\nBen\nCat")
     p = ids(client, 1)

@@ -87,16 +87,12 @@
 
 <section class="panel">
   <div class="panel-head">
-    <h2>Rules applied</h2>
+    <h2>Draw log</h2>
     <form method="post" action="{{ url_for('undo', game_id=game_id) }}">
       <button type="submit" {% if state.last_seq <= 1 %}disabled{% endif %}>Undo last entry</button>
     </form>
   </div>
-  <ul class="notices">
-    {% for entry, notice in recent %}
-      <li class="notice notice-{{ notice.level }}"><span class="muted">R{{ entry.round }}</span> {{ notice.text }}</li>
-    {% endfor %}
-  </ul>
+  {% include "_draw_log.html" %}
 </section>
 
 <section class="panel">

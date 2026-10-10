@@ -203,8 +203,7 @@ def create_app(test_config=None):
         state = load_state(game_id)
         if state.game_over:
             return redirect(url_for("summary", game_id=game_id))
-        return render_template("game.html", game_id=game_id, game=row, state=state,
-                               recent=list(reversed(state.notices))[:12])
+        return render_template("game.html", game_id=game_id, game=row, state=state)
 
     @app.post("/games/<int:game_id>/share-link")
     @login_required
@@ -289,8 +288,7 @@ def create_app(test_config=None):
         state = load_state(row["id"])
         if state.game_over:
             return redirect(url_for("watch_summary", token=token))
-        return render_template("watch.html", game=row, state=state, read_only=True,
-                               recent=list(reversed(state.notices))[:12])
+        return render_template("watch.html", game=row, state=state, read_only=True)
 
     @app.get("/watch/<token>/summary")
     def watch_summary(token):

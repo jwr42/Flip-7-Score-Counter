@@ -8,7 +8,7 @@ def test_full_game_flow(client):
 
     post(client, "/games/1/draw", player_id=p["Ann"], card="7")
     resp = post(client, "/games/1/draw", player_id=p["Ann"], card="7")
-    assert b"BUST! Ann drew a second 7" in resp.data
+    assert b"BUST! Ann drew a second 7" in resp.data and b"Draw log" in resp.data
 
     resp = post(client, "/games/1/draw", player_id=p["Ben"], card="freeze")
     assert b"Choose which active player the Freeze is played on" in resp.data

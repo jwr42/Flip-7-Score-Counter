@@ -15,11 +15,7 @@
 {% include "_players.html" %}
 
 <section class="panel">
-  <h2>Rules applied</h2>
-  <ul class="notices">
-    {% for entry, notice in recent %}
-      <li class="notice notice-{{ notice.level }}"><span class="muted">R{{ entry.round }}</span> {{ notice.text }}</li>
-    {% endfor %}
-  </ul>
+  <h2>Draw log</h2>
+  {% include "_draw_log.html" %}
 </section>
 {% endblock %}

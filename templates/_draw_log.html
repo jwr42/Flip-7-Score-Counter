@@ -1,0 +1,17 @@
+{% for r in state.rounds %}
+  <details {% if loop.last %}open{% endif %}>
+    <summary>Round {{ r.number }}</summary>
+    <ol class="log">
+      {% for entry in state.log if entry.round == r.number %}
+        <li>
+          <span class="log-seq">#{{ entry.seq }}</span> {{ entry.text }}
+          {% if entry.notices %}
+          <ul class="notices">
+            {% for n in entry.notices %}<li class="notice notice-{{ n.level }}">{{ n.text }}</li>{% endfor %}
+          </ul>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ol>
+  </details>
+{% endfor %}

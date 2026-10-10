@@ -22,6 +22,19 @@ MAX_USERNAME = 40
 MIN_PASSWORD = 8
 
 
+def check_account(username, password, user_id=None):
+    """The problem with a username and password for account `user_id` (None for a new
+    account), or None if they are fine. An empty password means keep the current one."""
+    if not username or len(username) > MAX_USERNAME:
+        return f"Choose a username of 1 to {MAX_USERNAME} characters."
+    if (password or user_id is None) and len(password) < MIN_PASSWORD:
+        return f"Use a password of at least {MIN_PASSWORD} characters."
+    taken = db.get_user_by_name(username)
+    if taken is not None and taken["id"] != user_id:
+        return "That username is taken."
+    return None
+
+
 def safe_next(target, default):
     """Only follow same-site paths, never `//host` or absolute URLs."""
     if not target or not target.startswith("/") or target.startswith("//"):
@@ -29,11 +42,29 @@ def safe_next(target, default):
     return target
 
 
+def home_url(user):
+    return url_for("admin") if user["is_admin"] else url_for("index")
+
+
 def login_required(view):
+    """For scorekeeping pages. The admin only manages accounts, so is sent there."""
     @functools.wraps(view)
     def wrapped(**kwargs):
         if g.user is None:
             return redirect(url_for("login", next=request.path))
+        if g.user["is_admin"]:
+            return redirect(url_for("admin"))
+        return view(**kwargs)
+    return wrapped
+
+
+def admin_required(view):
+    @functools.wraps(view)
+    def wrapped(**kwargs):
+        if g.user is None:
+            return redirect(url_for("login", next=request.path))
+        if not g.user["is_admin"]:
+            abort(404)   # the account manager looks missing to scorekeepers
         return view(**kwargs)
     return wrapped
 
@@ -48,7 +79,6 @@ def create_app(test_config=None):
         TIMEZONE=os.environ.get("FLIP7_TIMEZONE"),
         SESSION_COOKIE_SAMESITE="Lax",
         PERMANENT_SESSION_LIFETIME=timedelta(days=30),
-        ALLOW_REGISTRATION=True,
     )
     # Deployment settings (SECRET_KEY, TIMEZONE, SESSION_COOKIE_SECURE, ...) live in
     # instance/config.py, which is kept out of git.
@@ -60,7 +90,7 @@ def create_app(test_config=None):
 
     app.jinja_env.globals.update(label=label, STATUS_LABELS=STATUS_LABELS, WIN_SCORE=WIN_SCORE,
                                  NUMBERS=NUMBERS, MODIFIERS=MODIFIERS, ACTIONS=ACTIONS,
-                                 DECK_COMPOSITION=DECK_COMPOSITION,
+                                 DECK_COMPOSITION=DECK_COMPOSITION, home_url=home_url,
                                  TARGETED_ACTIONS=(FREEZE, FLIP_THREE))
 
     @app.template_filter("localtime")
@@ -102,24 +132,24 @@ def create_app(test_config=None):
             raise click.ClickException(f"No user named {username!r}.")
         click.echo(f"Gave {db.claim_unowned_games(user['id'])} game(s) to {user['username']}.")
 
-    @app.route("/register", methods=("GET", "POST"))
-    def register():
-        if not app.config["ALLOW_REGISTRATION"]:
-            abort(404)
-        if request.method == "POST":
-            username = request.form.get("username", "").strip()
-            password = request.form.get("password", "")
-            if not username or len(username) > MAX_USERNAME:
-                flash(f"Choose a username of 1 to {MAX_USERNAME} characters.", "error")
-            elif len(password) < MIN_PASSWORD:
-                flash(f"Use a password of at least {MIN_PASSWORD} characters.", "error")
-            elif db.get_user_by_name(username) is not None:
-                flash("That username is taken.", "error")
-            else:
-                log_in(db.create_user(username, generate_password_hash(password)))
-                return redirect(url_for("index"))
-        return render_template("register.html", min_password=MIN_PASSWORD,
-                               max_username=MAX_USERNAME)
+    @app.cli.command("create-admin")
+    @click.argument("username")
+    @click.password_option(help="Asked for if not given.")
+    def create_admin(username, password):
+        """Create the admin account USERNAME, or reset its password."""
+        user = db.get_user_by_name(username)
+        if user is not None and not user["is_admin"]:
+            raise click.ClickException(f"{user['username']!r} is a scorekeeper account, "
+                                       f"not an admin.")
+        error = check_account(username, password, user["id"] if user else None)
+        if error:
+            raise click.ClickException(error)
+        if user is None:
+            db.create_user(username, generate_password_hash(password), is_admin=True)
+            click.echo(f"Created admin {username}.")
+        else:
+            db.update_user(user["id"], username, generate_password_hash(password))
+            click.echo(f"Reset the password for admin {username}.")
 
     @app.route("/login", methods=("GET", "POST"))
     def login():
@@ -129,7 +159,7 @@ def create_app(test_config=None):
             if user and check_password_hash(user["password_hash"],
                                             request.form.get("password", "")):
                 log_in(user["id"])
-                return redirect(target)
+                return redirect(url_for("admin") if user["is_admin"] else target)
             flash("Wrong username or password.", "error")
         return render_template("login.html", next=target)
 
@@ -270,6 +300,57 @@ def create_app(test_config=None):
         return render_template("summary.html", game_id=row["id"], game=row, state=state,
                                standings=standings, series=series, read_only=read_only,
                                chart=score_chart(series, state.names))
+
+    def managed_user(user_id):
+        user = db.get_user(user_id)
+        if user is None or user["is_admin"]:
+            abort(404)
+        return user
+
+    @app.get("/admin")
+    @admin_required
+    def admin():
+        return render_template("admin.html", users=db.list_users(),
+                               min_password=MIN_PASSWORD, max_username=MAX_USERNAME)
+
+    @app.post("/admin/users")
+    @admin_required
+    def create_user():
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+        error = check_account(username, password)
+        if error:
+            flash(error, "error")
+        else:
+            db.create_user(username, generate_password_hash(password))
+            flash(f"Added {username}.", "info")
+        return redirect(url_for("admin"))
+
+    @app.route("/admin/users/<int:user_id>", methods=("GET", "POST"))
+    @admin_required
+    def edit_user(user_id):
+        user = managed_user(user_id)
+        if request.method == "POST":
+            username = request.form.get("username", "").strip()
+            password = request.form.get("password", "")
+            error = check_account(username, password, user_id)
+            if error:
+                flash(error, "error")
+                return redirect(url_for("edit_user", user_id=user_id))
+            db.update_user(user_id, username,
+                           generate_password_hash(password) if password else None)
+            flash(f"Saved {username}{' and their new password' if password else ''}.", "info")
+            return redirect(url_for("admin"))
+        return render_template("admin_user.html", user=user,
+                               min_password=MIN_PASSWORD, max_username=MAX_USERNAME)
+
+    @app.post("/admin/users/<int:user_id>/delete")
+    @admin_required
+    def delete_user(user_id):
+        user = managed_user(user_id)
+        count = db.delete_user(user_id)
+        flash(f"Deleted {user['username']} and {count} game{'' if count == 1 else 's'}.", "info")
+        return redirect(url_for("admin"))
 
     @app.get("/games/<int:game_id>/summary")
     @login_required

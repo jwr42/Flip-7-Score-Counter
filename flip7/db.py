@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE COLLATE NOCASE,
     password_hash TEXT NOT NULL,
+    is_admin INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE TABLE IF NOT EXISTS games (
@@ -68,10 +69,18 @@ def new_token():
 
 
 def migrate(db):
-    """Bring a database made before accounts existed up to the current schema. Its games
-    get no owner until `flask claim-games` assigns them."""
-    if db.execute("PRAGMA user_version").fetchone()[0] >= 1:
-        return
+    """Bring a database made by an older version up to the current schema, one
+    `user_version` step at a time."""
+    version = db.execute("PRAGMA user_version").fetchone()[0]
+    if version < 1:
+        migrate_v1(db)
+    if version < 2:
+        migrate_v2(db)
+
+
+def migrate_v1(db):
+    """Accounts arrived. Games made before then get no owner until `flask claim-games`
+    assigns them."""
     have = {row["name"] for row in db.execute("PRAGMA table_info(games)")}
     for name, decl in GAME_COLUMNS_V1.items():
         if name not in have:
@@ -87,6 +96,15 @@ def migrate(db):
     db.commit()
 
 
+def migrate_v2(db):
+    """Admin accounts arrived. Everyone who already had an account stays a regular user."""
+    have = {row["name"] for row in db.execute("PRAGMA table_info(users)")}
+    if "is_admin" not in have:
+        db.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0")
+    db.executescript("PRAGMA user_version = 2;")
+    db.commit()
+
+
 def init_app(app):
     app.teardown_appcontext(close_db)
     with app.app_context():
@@ -95,12 +113,39 @@ def init_app(app):
         migrate(db)
 
 
-def create_user(username, password_hash):
+def create_user(username, password_hash, is_admin=False):
     db = get_db()
-    user_id = db.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)",
-                         (username, password_hash)).lastrowid
+    user_id = db.execute("INSERT INTO users (username, password_hash, is_admin) VALUES (?, ?, ?)",
+                         (username, password_hash, int(is_admin))).lastrowid
     db.commit()
     return user_id
+
+
+def list_users():
+    """Regular (non-admin) users with how many games each has."""
+    return get_db().execute(
+        "SELECT u.id, u.username, u.created_at, "
+        "       (SELECT COUNT(*) FROM games WHERE user_id = u.id) AS game_count "
+        "FROM users u WHERE NOT u.is_admin ORDER BY u.username").fetchall()
+
+
+def update_user(user_id, username, password_hash=None):
+    """Rename a user and, if `password_hash` is given, change their password."""
+    db = get_db()
+    db.execute("UPDATE users SET username = ? WHERE id = ?", (username, user_id))
+    if password_hash is not None:
+        db.execute("UPDATE users SET password_hash = ? WHERE id = ?", (password_hash, user_id))
+    db.commit()
+
+
+def delete_user(user_id):
+    """Remove a user and all their games; players and entries go with the games. Returns
+    the number of games deleted, which is why they are not left to ON DELETE CASCADE."""
+    db = get_db()
+    count = db.execute("DELETE FROM games WHERE user_id = ?", (user_id,)).rowcount
+    db.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    db.commit()
+    return count
 
 
 def get_user(user_id):

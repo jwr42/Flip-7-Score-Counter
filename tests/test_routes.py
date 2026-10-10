@@ -1,4 +1,4 @@
-from conftest import make_app, player_ids as ids, post, register
+from conftest import logged_in, make_app, player_ids as ids, post
 
 
 def test_full_game_flow(client):
@@ -126,8 +126,7 @@ def _set_start_time(client, game_id, utc_text):
 
 
 def test_start_time_shown_in_configured_time_zone(tmp_path):
-    client = make_app(tmp_path, TIMEZONE="Europe/London").test_client()
-    register(client, "tester")
+    client = logged_in(make_app(tmp_path, TIMEZONE="Europe/London"), "tester")
     post(client, "/games", names="Ann\nBen\nCat")
 
     _set_start_time(client, 1, "2026-07-01 17:49:31")

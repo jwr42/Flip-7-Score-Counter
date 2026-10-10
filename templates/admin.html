@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Accounts · Flip 7{% endblock %}
+{% block content %}
+<section class="panel">
+  <h1>Add user</h1>
+  <form method="post" action="{{ url_for('create_user') }}" class="stack">
+    <label for="username">Username</label>
+    <input id="username" name="username" type="text" autocomplete="off" maxlength="{{ max_username }}" required>
+    <label for="password">Password (at least {{ min_password }} characters)</label>
+    <input id="password" name="password" type="password" autocomplete="new-password" minlength="{{ min_password }}" required>
+    <button class="primary" type="submit">Add user</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Users</h2>
+  {% if users %}
+  <ul class="games">
+    {% for user in users %}
+      <li>
+        <a href="{{ url_for('edit_user', user_id=user.id) }}">{{ user.username }}</a>
+        <span>{{ user.game_count }} game{{ '' if user.game_count == 1 else 's' }}</span>
+        <time class="muted" datetime="{{ user.created_at }}Z">Added {{ user.created_at | localtime }}</time>
+        <details class="delete">
+          <summary><span class="if-closed">Delete</span><span class="if-open">Cancel</span></summary>
+          <form method="post" action="{{ url_for('delete_user', user_id=user.id) }}">
+            <span>Delete {{ user.username }} and their {{ user.game_count }} game{{ '' if user.game_count == 1 else 's' }} permanently?</span>
+            <button type="submit" class="danger">Delete permanently</button>
+          </form>
+        </details>
+      </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">No users yet. Add one above.</p>
+  {% endif %}
+</section>
+{% endblock %}

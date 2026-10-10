@@ -1,6 +1,6 @@
 import sqlite3
 
-from conftest import PASSWORD, login, make_app, player_ids as ids, post, register
+from conftest import PASSWORD, add_user, logged_in, login, make_app, player_ids as ids, post
 
 
 def share_token(client, game_id):
@@ -19,17 +19,16 @@ def test_pages_require_login(app):
     assert "next=/games/1" in anon.get("/games/1").headers["Location"]
 
 
-def test_registration_validates_and_logs_in(app):
+def test_there_is_no_self_registration(app):
     anon = app.test_client()
-    assert b"at least 8 characters" in register(anon, "ann", "short").data
-    assert b"1 to 40 characters" in register(anon, "   ").data
-    resp = register(anon, "Ann")
-    assert b"New game" in resp.data and b"Ann" in resp.data
-    assert b"That username is taken" in register(app.test_client(), "ANN").data
+    assert anon.get("/register").status_code == 404
+    assert anon.post("/register", data={"username": "ann", "password": PASSWORD}) \
+        .status_code == 404
+    assert b"Ask the site's admin" in anon.get("/login").data
 
 
 def test_login_logout_and_next(app):
-    register(app.test_client(), "ann")
+    add_user(app, "ann")
     c = app.test_client()
     assert b"Wrong username or password" in login(c, "ann", "nope nope").data
     assert b"Wrong username or password" in login(c, "nobody").data
@@ -40,12 +39,6 @@ def test_login_logout_and_next(app):
     resp = c.post("/login", data={"username": "ann", "password": PASSWORD,
                                   "next": "//evil.example"})
     assert resp.headers["Location"] == "/"
-
-
-def test_registration_can_be_closed(tmp_path):
-    c = make_app(tmp_path, ALLOW_REGISTRATION=False).test_client()
-    assert c.get("/register").status_code == 404
-    assert b"Create an account" not in c.get("/login").data
 
 
 def test_users_only_see_and_change_their_own_games(client, other_client):
@@ -142,8 +135,7 @@ def test_old_database_is_migrated_and_games_can_be_claimed(tmp_path):
 
     app = make_app(tmp_path)
     make_app(tmp_path)   # a second start must not migrate again
-    c = app.test_client()
-    register(c, "ann")
+    c = logged_in(app, "ann")
     assert "Old, Timer" not in c.get("/").get_data(as_text=True)   # unowned until claimed
 
     result = app.test_cli_runner().invoke(args=["claim-games", "ann"])

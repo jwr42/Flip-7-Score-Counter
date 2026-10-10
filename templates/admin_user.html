@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ user.username }} · Flip 7{% endblock %}
+{% block nav %}<a href="{{ url_for('admin') }}">All users</a>{% endblock %}
+{% block content %}
+<section class="panel auth">
+  <h1>Edit {{ user.username }}</h1>
+  <form method="post" action="{{ url_for('edit_user', user_id=user.id) }}" class="stack">
+    <label for="username">Username</label>
+    <input id="username" name="username" type="text" autocomplete="off" maxlength="{{ max_username }}" value="{{ user.username }}" required>
+    <label for="password">New password (leave blank to keep the current one)</label>
+    <input id="password" name="password" type="password" autocomplete="new-password" minlength="{{ min_password }}">
+    <button class="primary" type="submit">Save</button>
+  </form>
+</section>
+{% endblock %}
